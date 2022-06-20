@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Stadtmodell Köln</title>
+
+    <link type="text/css" rel="stylesheet" href="css/example.css">
+</head>
+
+<!-- <body data-spy="scroll" data-target="nav" onload="onLoad()"> -->
+<body onload="onLoad()">
+
+<div id="main">
+    <iframe id="content" class="scroll-section" frameborder="0" height="100%"></iframe>
+</div>
+
+<script type="text/javascript">
+    var baseURI = document.baseURI;
+
+    function bindIframe() {
+	    goTo('map.html');
+        //goTo('examples/source_stream_wfs_3d.html');
+        <!-- // load page if setted -->
+        <!-- if (document.location.hash) { -->
+            <!-- var url = document.location.href.replace('#', '') + '.html'; -->
+            <!-- goTo(url); -->
+        <!-- } else { -->
+            <!-- goTo('map.html'); -->
+            <!-- //goTo('examples/source_stream_wfs_3d.html'); -->
+			
+        <!-- } -->
+    }
+
+    function goTo(url, slug) {
+        if (slug) window.location.hash = slug;
+        var iframe = document.getElementById('content');
+        iframe.src = url.replace('index.html', '');
+        iframe.focus();
+    }
+
+    function onLoad() {
+		bindIframe();
+    }
+</script>
+</body>
+</html>

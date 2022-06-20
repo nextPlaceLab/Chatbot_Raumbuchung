@@ -1,0 +1,904 @@
+<html>
+    <head>
+        <title>Raummanagement Quartier Deutzer Hafen</title>
+
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="css/example.css">
+        <link rel="stylesheet" type="text/css" href="css/LoadingScreen.css">
+        <link rel="stylesheet" type="text/css" href="css/general.css">
+        <link rel="stylesheet" type="text/css" href="css/modal.css">
+        <link rel="stylesheet" type="text/css" href="css/slider.css">
+		<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+		
+		<link rel="stylesheet" href="css/GpPluginItowns.css" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+		
+		<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    </head>
+    <body>
+		<div class="sliderdivcontainer">
+			<div class="shadowCheckBox">
+				<input type='checkbox' checked onclick='handleClickShadow(this);'>
+				<label>Schatten</label>
+			</div>
+			<div class="dateShadowPicker">
+				<label>Datum: <input type="text" id="datefield"></label>
+			</div>
+			<div class="slidercontainer">
+				<input class="slider" type="range" min="0" max="23.5" value="12" step="0.5" id="slider" orient="horizontal">
+				<!-- <input type="range" min="0" max="23.5" value="12" step="0.5" id="slider" orient="horizontal"> -->
+			</div>
+		</div>
+		
+		<div class="attributioncontainer">
+			<p id="attribution" style="margin-right:10px;"></p>
+		</div>
+
+
+        <div id="viewerDiv"></div>
+		
+        <script src="examples/js/GUI/GuiTools.js"></script>
+        <script src="dist/itowns.js"></script>
+        <script src="js/LoadingScreen.js"></script>
+        <script src="dist/debug.js"></script>
+		<script src="examples/js/3dTilesHelper.js"></script>
+		<script src="js/helper.js"></script>
+		<script src="js/FeatureToolTip.js"></script>
+		<script src="dist/astronomy.min.js"></script>
+		<script src="js/helper_sunposition.js"></script>
+		<script src="js/helper_tests.js"></script>
+		<script src="js/datepicker-de.js"></script>
+		<script src="dist/GpPluginItowns.js"></script>
+		<!-- <script src="dist/GpPluginItowns-src.js"></script> -->
+        <!-- <div id="description"> -->
+            <!-- <p><b>Building Information</b></p> -->
+            <!-- <ul id="info"> -->
+            <!-- </ul> -->
+        <!-- </div> -->
+        <!-- <div id="description"> -->
+            <!-- <p><b>Feature Information:</b></p> -->
+            <!-- <div id="featureInfo"></div> -->
+        <!-- </div> -->
+		<script src="https://botpress.livinglab-essigfabrik.online:3000/assets/modules/channel-web/inject.js"></script>
+
+		<!-- The Modal -->
+		<div id="modal-popup" class="modal">
+			<!-- Modal content -->
+			<!-- <div id="modal-popup-content" class="modal-content"> -->
+				<!-- <!--  --> -->
+			<!-- </div> -->
+				<!-- <span class="close">&times;</span> -->
+				<!-- <button type="button" id="anfragen">Anfragen</button> -->
+		</div>
+		<div id="modal-popup-WoMa" class="modal">
+			<!-- Modal content -->
+			<div id="modalInfo" class="modal-content">
+				<!-- <span class="close">&times;</span> -->
+			</div>
+		</div>
+		<div id="modal-popup-Apo" class="modal">
+			<!-- Modal content -->
+			<div id="modalInfo" class="modal-content">
+				<!-- <span class="close">&times;</span> -->
+			</div>
+		</div>
+		<div id="modal-popup-Corona" class="modal">
+			<!-- Modal content -->
+			<div id="modalInfo" class="modal-content">
+				<!-- <span class="close">&times;</span> -->
+			</div>
+		</div>
+		
+		
+        <script type="text/javascript">
+			window.botpressWebChat.init({ host: 'https://botpress.livinglab-essigfabrik.online:3000',
+				//botId: 'livinglab-test',
+				botId: 'essigfabrik_raummanagement',
+				hideWidget: false,
+				botName: 'EFBO', // Name of your bot
+				botAvatarUrl: null, // Default avatar URL of the image (e.g., 'https://avatars3.githubusercontent.com/u/1315508?v=4&s=400' )
+				botConvoTitle: 'Raummanagement', // Title of the first conversation with the bot
+				botConvoDescription: '',
+				backgroundColor: '#ebe328', // Color of the background
+				textColorOnBackground: '#666666', // Color of the text on the background
+				foregroundColor: '#0176ff', // Element background color (header, composer, button..)
+				textColorOnForeground: '#ffffff', // Element text color (header, composer, button..)
+				showUserName: false, // Whether or not to show the user's name
+				showUserAvatar: true, // Whether or not to show the user's avatar
+				enableTranscriptDownload: true, // Whether or not to show the transcript download button
+				locale: 'browser',
+				//extraStylesheet: 'assets/modules/channel-web/examples/custom-theme.css',
+			})
+			window.addEventListener('message', function(event) {
+				if (event.data.name === 'webchatLoaded') {
+					window.botpressWebChat.sendEvent({
+						type: 'proactive-trigger',
+						channel: 'web',
+						payload: { text: 'fake message' }
+					})
+				}
+			})
+			
+			var mapProps = {};
+			
+
+
+
+			
+			window.addEventListener("message", event => {
+				if (event.data.payload && event.data.payload.type === "quick_reply") {
+					<!-- console.log("Quick reply detected"); -->
+					<!-- console.log(event.data.payload.payload); -->
+					<!-- console.log(event.data.payload.payload.includes('TYPE')); -->
+
+					if (event.data.payload.payload.includes('TYPE')) {
+						let tmp = event.data.payload.payload.split('_');
+						if (tmp[0] == 'TYPEQTY') {
+							typeQty = { min: Number(tmp[1]), max: Number(tmp[2])};
+							
+							mapProps[tmp[0]] = typeQty;
+						}
+						else {
+							let text = event.data.payload.text;
+							if (text == 'Drinnen') { text = true; };
+							if (text == 'Draußen') { text = false; };
+							
+							mapProps[tmp[0]] = text
+						}
+					}
+					//console.log(mapProps)
+					<!-- console.log(event.data) -->
+					<!-- console.log("The chosen option is", event.data.payload.text); -->
+					<!-- // you can trigger something in your frontend here -->
+				}
+				
+				if (event.data.payload && event.data.payload.type === "session_reset") {
+					window.botpressWebChat.sendEvent({
+						type: 'proactive-trigger',
+						channel: 'web',
+						payload: { text: 'fake message' }
+					})
+				}
+
+			});
+			
+			
+			
+            function colorFeature(properties) {
+				let color = new itowns.THREE.Color();
+                if (properties.funktion.indexOf('Grünfläche') === 0 || properties.funktion.indexOf('Park') === 0) {
+                    return color.set(0x119911);
+                } else if (properties.funktion.indexOf('Platz') === 0) {
+                    return color.set(0x995511);
+                }
+                return color.set(0x7cd408);
+            }
+			
+			function extrudePlaces(properties) {
+				return properties.hoehe;
+			}
+			
+			var selectionLayer;
+
+			window.addEventListener("message", event => {
+				//console.log(event.data)
+				//console.log(event)
+				if (event.data && event.data.type === "data") {
+					if (event.data.data == 'showMap') {
+
+						if (selectionLayer) {
+							<!-- window.removeEventListener('click', openSelectionPickingLink); -->
+							<!-- window.removeEventListener('mousemove', fillModalWithSelectionPickingInfo); -->
+							window.removeEventListener('click', fillModalWithSelectionPickingInfo);
+							selectionLayer.delete();
+							view.removeLayer('Auswahl');
+						}
+
+						var url = 'https://geoserver.livinglab-essigfabrik.online/geoserver/LLE/ows?service=WFS&version=1.0.0&request=GetFeature&SERVICE=WFS&REQUEST=GetFeature&typeName=lle:tablePlaces&VERSION=2.0.2&SRSNAME=EPSG:4326&outputFormat=application/json&EPSG:4326&CQL_FILTER='
+
+						let inside = '';
+
+						if (mapProps['TYPEWHERE']) {
+							url += 'ingebaeude=1';
+						} else {
+							url += 'ingebaeude=0';
+						}
+
+						url += ' and maxperson>='+ Math.max(mapProps.TYPEQTY.min,mapProps.TYPEQTY.max).toString();
+
+						// Create a layer
+						// const selectionLayer = new itowns.GeometryLayer('Freizeitflächen', new itowns.THREE.Group(), {
+						selectionLayer = new itowns.GeometryLayer('Auswahl', new itowns.THREE.Group(), {
+							source: new itowns.FileSource({
+								url: url,
+								crs: 'EPSG:4326',
+								fetcher: itowns.Fetcher.json,
+								parser: itowns.GeoJsonParser.parse,
+							}),
+							update: itowns.FeatureProcessing.update,
+							convert: itowns.Feature2Mesh.convert({
+								altitude: -0.1,
+								extrude: extrudePlaces,
+								color: colorFeature,
+							}),
+							mergeFeatures: false,
+						});
+
+						// Add the layer
+						view.addLayer(selectionLayer);
+
+
+						var selectPickingArgs = {};
+						selectPickingArgs.htmlDiv = document.getElementById('modal-popup');
+						selectPickingArgs.view = view;
+
+						selectionLayer.whenReady.then(function _(layer) {
+							selectPickingArgs.layer = selectionLayer;
+							<!-- window.addEventListener('click', -->
+									<!-- (event) => openSelectionPickingLink(event, view, selectPickingArgs),false); -->
+							<!-- window.addEventListener('mousemove', -->
+									<!-- (event) => fillModalWithSelectionPickingInfo(event, view, selectPickingArgs),false); -->
+							window.addEventListener('click',
+									(event) => fillModalWithSelectionPickingInfo(event, view, selectPickingArgs),false);
+						});	
+
+
+
+
+						<!-- selectionLayer.whenReady.then( function _(layer) { -->
+							<!-- var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, view, layer); -->
+						<!-- }); -->
+					}
+				}
+			});
+			
+			
+			
+			// *** iTowns ***
+			var THREE = itowns.THREE;		
+
+			// Define initial camera position
+            var positionOnGlobe = { longitude: 6.956944, latitude: 50.938056, altitude: 5000 };
+            var placement = {
+                //coord: new itowns.Coordinates('EPSG:4326', 6.956944, 50.938056), range: 25000,
+                //coord: new itowns.Coordinates('EPSG:4326', 6.99, 50.913333), range: 2500, // Poll
+                coord: new itowns.Coordinates('EPSG:4326', 6.978090, 50.922810), range: 1000, // Deutzer Hafen
+                tilt: 45,
+                //heading: -180
+            }
+
+            var viewerDiv = document.getElementById('viewerDiv');
+			
+			var slider = document.getElementById("slider");
+			slider.addEventListener("input", setSunPosition);
+            
+            var globeOptions = {
+            	scene3D : new THREE.Scene(),
+            }
+
+            //var view = new itowns.GlobeView(viewerDiv, placement, globeOptions);
+			var viewExt = new itowns.GlobeViewExtended(viewerDiv, placement, globeOptions);
+			view = viewExt.getGlobeView();
+			
+			<!-- var camera = view.camera.camera3D; -->
+			<!-- var renderer = view.mainLoop.gfxEngine.renderer; -->
+			
+			<!-- renderer.shadowMap.enabled = true; -->
+			<!-- renderer.shadowMap.type = itowns.THREE.PCFShadowMap; //VSMShadowMap; -->
+			<!-- renderer.shadowMap.needsUpdate = true; -->
+			
+			view.mainLoop.gfxEngine.renderer.shadowMap.enabled = true;
+			view.mainLoop.gfxEngine.renderer.shadowMap.type = itowns.THREE.PCFShadowMap; //VSMShadowMap;
+			view.mainLoop.gfxEngine.renderer.shadowMap.needsUpdate = true;
+            
+			// *** setting sun position *** //
+			var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+			var sunAlt = 5000;
+			var now = new Date();
+			now.setHours(12);
+			now.setMinutes(0);
+			var posObs = new itowns.Coordinates('EPSG:4326', positionOnGlobe.longitude, positionOnGlobe.latitude, 0).as(view.referenceCrs);
+			
+			var datefield = document.getElementById('datefield');
+			datefield.value = now.toLocaleDateString() + ", " + "12:00:00";
+			
+			// delete original sun
+			view.tileLayer.object3d.remove (view.tileLayer.object3d.children[0]);
+			
+			// Add new sun casting shadows
+			var sun = new THREE.DirectionalLight( 0xffffff, 1, 100 );
+			setSunPositionDate(now);
+			sun.castShadow = true;
+			sun.updateMatrixWorld(true);
+			sun.shadow.camera.far = 50000;
+			view.tileLayer.object3d.add(sun);
+			initSunTarget ();
+
+			shadowSize = 4096;
+			
+			sun.shadow.mapSize.width = 4*shadowSize;  // default
+			sun.shadow.mapSize.height = 4*shadowSize;
+			
+			sun.shadow.camera.left = -shadowSize;
+			sun.shadow.camera.right = shadowSize;
+			sun.shadow.camera.top = shadowSize;
+			sun.shadow.camera.bottom = -shadowSize;
+			
+			function handleClickShadow(cb) {
+				sun.castShadow = cb.checked;
+				view.notifyChange();
+			}
+
+            setupLoadingScreen(viewerDiv, view);
+
+            var menuGlobe = new GuiTools('menuDiv', view, 300);
+			
+			
+
+
+			////**** Tests ****
+			//testSunShadow();
+			
+			
+			itowns.Fetcher.json('./layers/OSM.json')
+				.then(function _(config) {
+					config.source = new itowns.TMSSource(config.source);
+					var osmLayer = new itowns.ColorLayer('OSM', config);
+					viewExt.addLayer(osmLayer)
+				});
+
+			itowns.Fetcher.json('./layers/CartoCDN.json')
+				.then(function _(config) {
+					config.source = new itowns.TMSSource(config.source);
+					var cartoCdnLayer = new itowns.ColorLayer('CARTO', config);
+					viewExt.addLayer(cartoCdnLayer)
+				});
+
+            // Add Open Street Map orthographic layer
+			viewExt.listen(itowns.GlobeViewExtended.EVENTS.GLOBE_INITIALIZED, () => {
+				// adds a layerSwitcher control with specific configuration for ortho layer
+				var layerSwitcher = new itowns.control.LayerSwitcher({
+					layers: [ {
+						id: "CARTO",
+						config: {
+							title: "CARTO Basiskarte",
+							description: "CARTO-Layer",
+							<!-- quicklookUrl: "lien/Vers/UnApercuRapide.png", -->
+							<!-- legends: [{ -->
+								<!-- url: "lien/Vers/UneLegende.png" -->
+							<!-- }], -->
+							<!-- metadata: [{ -->
+								<!-- url: "lien/Vers/Une/MetaDonnee.xml" -->
+							<!-- }] -->
+						}
+					},
+					{
+						id: "OSM",
+						config: {
+							title: "OSM Basiskarte",
+							description: "OSM-Layer",
+							<!-- quicklookUrl: "lien/Vers/UnApercuRapide.png", -->
+							<!-- legends: [{ -->
+								<!-- url: "lien/Vers/UneLegende.png" -->
+							<!-- }], -->
+							<!-- metadata: [{ -->
+								<!-- url: "lien/Vers/Une/MetaDonnee.xml" -->
+							<!-- }] -->
+						}
+					},
+					]
+				});
+				// adds the layerSwitcher control
+				viewExt.addWidget(layerSwitcher);
+			});
+				
+			var attr = document.getElementById("attribution");
+			//attr.innerHTML = '&copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a> contributors';
+			attr.innerHTML = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href= "https://carto.com/about-carto/">CARTO</a>'
+				
+				
+            <!-- function addElevationLayerFromConfig(config) { -->
+                <!-- config.source = new itowns.WMTSSource(config.source); -->
+                <!-- var layer = new itowns.ElevationLayer(config.id, config); -->
+                <!-- view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe)); -->
+            <!-- } -->
+			<!-- //itowns.Fetcher.json('./examples/layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig); -->
+            <!-- //itowns.Fetcher.json('./examples/layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig); -->
+			<!-- function addElevationLayerFromConfig(config) { -->
+                <!-- config.source = new itowns.WMSSource(config.source); -->
+                <!-- var layer = new itowns.ElevationLayer(config.id, config); -->
+                <!-- view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe)); -->
+            <!-- } -->
+            <!-- itowns.Fetcher.json('./layers/EU_DEM.json').then(addElevationLayerFromConfig); -->
+			
+			
+
+
+
+
+
+
+			
+
+
+			// *** C3D Tiles ***
+			// *****************
+            //debug.createTileDebugUI(menuGlobe.gui, view, view.tileLayer);			
+
+			// *** Stadtmodell *** //
+			function c3dTilesAddonLoaded(obj) {
+				let child = obj.children[1];
+				if (child != undefined) {
+					child.children[0].children[0].receiveShadow = true;
+				}
+				obj.children[0].castShadow = true;
+				obj.children[0].receiveShadow = true;
+				view.notifyChange();
+			}
+				
+			<!-- const extensions = new itowns.C3DTExtensions(); -->
+            <!-- extensions.registerExtension("3DTILES_batch_table_hierarchy", -->
+                <!-- { [itowns.C3DTilesTypes.batchtable]: -->
+                    <!-- itowns.C3DTBatchTableHierarchyExtension }); -->
+				
+            <!-- // Create a new 3D tiles layer with batch table hierarchy extension -->
+			<!-- var cityMaterial = new THREE.MeshLambertMaterial({ color: 0xdcdcdc }); -->
+			
+            <!-- var $3dTilesLayerBTHierarchy = new itowns.C3DTilesLayer( -->
+                <!-- 'Stadtmodell', { -->
+                    <!-- name: 'BTHierarchy', -->
+                    <!-- source: new itowns.C3DTilesSource({ -->
+						<!-- url: 'https://ar.livinglab-essigfabrik.online/c3dTiles/Stadtmodell_ohne_Deutzer_Hafen/tileset.json', -->
+                    <!-- }), -->
+					<!-- overrideMaterials: cityMaterial, -->
+					<!-- onTileContentLoaded: c3dTilesAddonLoaded, -->
+                <!-- }, -->
+            <!-- view); -->
+			
+			<!-- itowns.View.prototype.addLayer.call(view, $3dTilesLayerBTHierarchy); -->
+	
+			<!-- // Add a debug UI -->
+            <!-- debug.create3dTilesDebugUI(menuGlobe.gui, view, -->
+                <!-- $3dTilesLayerBTHierarchy); -->
+
+
+			var bleibtMaterial = new THREE.MeshLambertMaterial({ color: 0x326da8 });
+
+            var $3dTilesLayerverbleibend = new itowns.C3DTilesLayer(
+                'Deutzer Hafen verbleibender Bestand', {
+                    name: 'BTHierarchy',
+                    source: new itowns.C3DTilesSource({
+						url: 'https://ar.livinglab-essigfabrik.online/c3dTiles/Deutzer_Hafen_verbleibend/tileset.json',
+                    }),
+					overrideMaterials: bleibtMaterial,
+					onTileContentLoaded: c3dTilesAddonLoaded,
+                },
+            view);
+			
+			itowns.View.prototype.addLayer.call(view, $3dTilesLayerverbleibend);
+	
+			// Add a debug UI
+            debug.create3dTilesDebugUI(menuGlobe.gui, view,
+                $3dTilesLayerverbleibend);
+
+
+
+
+
+
+            <!-- function acceptFeatureWoma(properties) { -->
+                <!-- if (properties.days.indexOf(days[now.getDay()]) >= 0) { -->
+                    <!-- return true; -->
+                <!-- } -->
+                <!-- return false; -->
+            <!-- } -->
+
+			<!-- const womaLayer = new itowns.GeometryLayer('Wochenmärkte', new itowns.THREE.Group(), { -->
+				<!-- source: new itowns.WFSSource({ -->
+                    <!-- url: 'https://geoserver.livinglab-essigfabrik.online/geoserver/LLE/ows?service=WFS&version=1.0.0&request=GetFeature&', // Filter not possible caused by bbox CQL_FILTER=days%20LIKE%20%27%25'+ days[now.getDay()] +'%25%27&', -->
+					<!-- typeName: 'lle:koelnWoechenmaerkte', -->
+                    <!-- crs: 'EPSG:4326', -->
+                    <!-- format: 'application/json', -->
+                <!-- }), -->
+				<!-- update: itowns.FeatureProcessing.update, -->
+				<!-- convert: itowns.Feature2Mesh.convert({}), -->
+				<!-- mergeFeatures: false, -->
+				<!-- filter: acceptFeatureWoma, -->
+				<!-- onMeshCreated: function setMesh(meshes) { -->
+					<!-- let texture = new THREE.TextureLoader().load( 'images/icons/200px-Shopping_basket.svg.png' ); -->
+
+					<!-- let cylGgeometry = new THREE.CylinderGeometry(2, 0, 60, 8); -->
+					<!-- cylGgeometry.rotateX(Math.PI/2); -->
+					<!-- cylGgeometry.rotateZ(-Math.PI/2); -->
+					<!-- cylGgeometry.translate(0,0,30); -->
+					<!-- let cirGeometry = new THREE.CircleGeometry( 20, 32 ); -->
+					<!-- cirGeometry.rotateX(Math.PI/2); -->
+					<!-- cirGeometry.translate(0,0,80); -->
+					
+					<!-- cirGeometry.merge(cylGgeometry); -->
+					
+					<!-- let material = new THREE.MeshBasicMaterial( { map: texture } ); -->
+					<!-- let iconWoma = new THREE.Mesh( cirGeometry, material ); -->
+
+					<!-- if (meshes.children.length == 0) { -->
+						<!-- let icon = iconWoma.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', meshes.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += .30; -->
+						
+						<!-- icon.feature = meshes.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- meshes.layer.object3d.add( icon ); -->
+					<!-- } -->
+					
+					<!-- for (mesh of meshes.children) { -->
+						<!-- let icon = iconWoma.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', mesh.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += 75; -->
+
+						<!-- icon.feature = mesh.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- mesh.layer.object3d.add( icon ); -->
+					<!-- } -->
+					<!-- view.notifyChange(); -->
+                <!-- }, -->
+			<!-- }); -->
+			
+			<!-- // Add the layer -->
+			<!-- view.addLayer(womaLayer); -->
+
+			<!-- var womaPickingArgs = {}; -->
+            <!-- womaPickingArgs.htmlDiv = document.getElementById('modal-popup-WoMa'); -->
+            <!-- womaPickingArgs.view = view; -->
+			
+			<!-- function womaPicking() { -->
+				<!-- womaLayer.whenReady.then(function _(layer) { -->
+					<!-- womaPickingArgs.layer = layer; -->
+					<!-- window.addEventListener('mousemove', -->
+						<!-- (event) => fillModalWithWoMaPickingInfo(event, view, womaPickingArgs),false); -->
+				<!-- });			 -->
+			<!-- } -->
+			
+			<!-- view.addEventListener('layers-initialized', womaPicking); -->
+			
+			<!-- womaLayer.whenReady.then( function _(layer) { -->
+				<!-- var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, view, layer); -->
+            <!-- }); -->
+			
+			
+
+			<!-- // *** Apotheken *** -->
+			<!-- const apoLayer = new itowns.GeometryLayer('Apotheken', new itowns.THREE.Group(), { -->
+				<!-- source: new itowns.FileSource({ -->
+                    <!-- url: 'https://ar.livinglab-essigfabrik.online/axel/notdienstkalender.geojson', -->
+                    <!-- crs: 'EPSG:4326', -->
+					<!-- fetcher: itowns.Fetcher.json, -->
+					<!-- parser: itowns.GeoJsonParser.parse, -->
+                    <!-- //format: 'application/json', -->
+                <!-- }), -->
+				<!-- update: itowns.FeatureProcessing.update, -->
+				<!-- convert: itowns.Feature2Mesh.convert({}), -->
+				<!-- mergeFeatures: false, -->
+				<!-- onMeshCreated: function setMesh(meshes) { -->
+					<!-- let texture = new THREE.TextureLoader().load( 'images/icons/200px-Deutsche_Apotheke_Logo.svg.png' ); -->
+
+					<!-- let cylGgeometry = new THREE.CylinderGeometry(2, 0, 60, 8); -->
+					<!-- cylGgeometry.rotateX(Math.PI/2); -->
+					<!-- cylGgeometry.rotateZ(-Math.PI/2); -->
+					<!-- cylGgeometry.translate(0,0,30); -->
+					<!-- let cirGeometry = new THREE.CircleGeometry( 20, 32 ); -->
+					<!-- cirGeometry.rotateX(Math.PI/2); -->
+					<!-- cirGeometry.translate(0,0,80); -->
+					
+					<!-- cirGeometry.merge(cylGgeometry); -->
+					
+					<!-- let material = new THREE.MeshBasicMaterial( { map: texture } ); -->
+					<!-- let iconApo = new THREE.Mesh( cirGeometry, material ); -->
+
+					<!-- if (meshes.children.length == 0) { -->
+						<!-- let icon = iconApo.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', meshes.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += .30; -->
+						
+						<!-- icon.feature = meshes.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- meshes.layer.object3d.add( icon ); -->
+					<!-- } -->
+					
+					<!-- for (mesh of meshes.children) { -->
+						<!-- let icon = iconApo.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', mesh.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += 75; -->
+
+						<!-- icon.feature = mesh.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- mesh.layer.object3d.add( icon ); -->
+					<!-- } -->
+					<!-- view.notifyChange(); -->
+                <!-- }, -->
+			<!-- }); -->
+			
+			<!-- // Add the layer -->
+			<!-- view.addLayer(apoLayer); -->
+
+			<!-- var apoPickingArgs = {}; -->
+            <!-- apoPickingArgs.htmlDiv = document.getElementById('modal-popup-Apo'); -->
+            <!-- apoPickingArgs.view = view; -->
+			
+			<!-- function apoPicking() { -->
+				<!-- apoLayer.whenReady.then(function _(layer) { -->
+					<!-- apoPickingArgs.layer = layer; -->
+					<!-- window.addEventListener('mousemove', -->
+						<!-- (event) => fillModalWithApoPickingInfo(event, view, apoPickingArgs),false); -->
+				<!-- });			 -->
+			<!-- } -->
+			
+			<!-- view.addEventListener('layers-initialized', apoPicking); -->
+			
+			<!-- apoLayer.whenReady.then( function _(layer) { -->
+				<!-- var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, view, layer); -->
+            <!-- }); -->
+
+
+			<!-- // *** Corona-Testzentren *** -->
+			<!-- const coronaLayer = new itowns.GeometryLayer('Corona Testzentren', new itowns.THREE.Group(), { -->
+				<!-- source: new itowns.WFSSource({ -->
+                    <!-- url: 'https://geoserver.livinglab-essigfabrik.online/geoserver/LLE/ows?service=WFS&version=1.0.0&request=GetFeature&', // Filter not possible caused by bbox CQL_FILTER=days%20LIKE%20%27%25'+ days[now.getDay()] +'%25%27&', -->
+					<!-- typeName: 'lle:Corona-Testzentren', -->
+                    <!-- crs: 'EPSG:4326', -->
+                    <!-- format: 'application/json', -->
+                <!-- }), -->
+				<!-- update: itowns.FeatureProcessing.update, -->
+				<!-- convert: itowns.Feature2Mesh.convert({}), -->
+				<!-- mergeFeatures: false, -->
+				<!-- //filter: acceptFeatureWoma, -->
+				<!-- onMeshCreated: function setMesh(meshes) { -->
+					<!-- let texture = new THREE.TextureLoader().load( 'images/icons/corona-virus.png' ); -->
+
+					<!-- let cylGgeometry = new THREE.CylinderGeometry(2, 0, 60, 8); -->
+					<!-- cylGgeometry.rotateX(Math.PI/2); -->
+					<!-- cylGgeometry.rotateZ(-Math.PI/2); -->
+					<!-- cylGgeometry.translate(0,0,30); -->
+					<!-- let cirGeometry = new THREE.CircleGeometry( 20, 32 ); -->
+					<!-- cirGeometry.rotateX(Math.PI/2); -->
+					<!-- cirGeometry.translate(0,0,80); -->
+					
+					<!-- cirGeometry.merge(cylGgeometry); -->
+					
+					<!-- let material = new THREE.MeshBasicMaterial( { map: texture } ); -->
+					<!-- let iconWoma = new THREE.Mesh( cirGeometry, material ); -->
+
+					<!-- if (meshes.children.length == 0) { -->
+						<!-- let icon = iconWoma.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', meshes.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += .30; -->
+						
+						<!-- icon.feature = meshes.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- meshes.layer.object3d.add( icon ); -->
+					<!-- } -->
+					
+					<!-- for (mesh of meshes.children) { -->
+						<!-- let icon = iconWoma.clone(); -->
+						
+						<!-- let coords = new itowns.Coordinates('EPSG:4978', mesh.feature.vertices).as('EPSG:4326'); -->
+						<!-- //coords.altitude += 75; -->
+
+						<!-- icon.feature = mesh.feature; -->
+						<!-- icon.position.copy(coords.as(view.referenceCrs)); -->
+						<!-- icon.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', coords) ); -->
+						
+						<!-- mesh.layer.object3d.add( icon ); -->
+					<!-- } -->
+					<!-- view.notifyChange(); -->
+                <!-- }, -->
+			<!-- }); -->
+			
+			<!-- // Add the layer -->
+			<!-- view.addLayer(coronaLayer); -->
+
+			<!-- var coronaPickingArgs = {}; -->
+            <!-- coronaPickingArgs.htmlDiv = document.getElementById('modal-popup-Corona'); -->
+            <!-- coronaPickingArgs.view = view; -->
+			
+			<!-- function coronaPicking() { -->
+				<!-- coronaLayer.whenReady.then(function _(layer) { -->
+					<!-- coronaPickingArgs.layer = layer; -->
+					<!-- window.addEventListener('click', -->
+						<!-- (event) => openCoronaPickingLink(event, view, coronaPickingArgs),false); -->
+					<!-- window.addEventListener('mousemove', -->
+						<!-- (event) => fillModalWithCoronaPickingInfo(event, view, coronaPickingArgs),false); -->
+				<!-- });			 -->
+			<!-- } -->
+			
+			<!-- view.addEventListener('layers-initialized', coronaPicking); -->
+			
+			<!-- coronaLayer.whenReady.then( function _(layer) { -->
+				<!-- var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, view, layer); -->
+            <!-- }); -->
+
+			
+			
+			
+			<!-- // *** LoRa Punkte *** -->
+            <!-- function colorPoint(properties) { -->
+                <!-- return new itowns.THREE.Color(0x00ff00); -->
+            <!-- } -->
+
+            <!-- function altitudePoint(properties, contour) { -->
+                <!-- <!-- var result; --> -->
+                <!-- <!-- var z = 0; --> -->
+                <!-- <!-- if (contour) { --> -->
+                    <!-- <!-- result = itowns.DEMUtils.getTerrainObjectAt(view.tileLayer, contour, 0, tile); --> -->
+                    <!-- <!-- if (!result) { --> -->
+                        <!-- <!-- result = itowns.DEMUtils.getTerrainObjectAt(view.tileLayer, contour, 0); --> -->
+                    <!-- <!-- } --> -->
+                    <!-- <!-- if (result) { --> -->
+                        <!-- <!-- tile = [result.tile]; --> -->
+                        <!-- <!-- z = result.coord.z; --> -->
+                    <!-- <!-- } --> -->
+                    <!-- <!-- return z + 5; --> -->
+                <!-- <!-- } --> -->
+				<!-- return -0.5; -->
+            <!-- } -->
+
+            <!-- function acceptFeaturePoint(properties) { -->
+                <!-- var anzahl = properties.anzahl; -->
+				<!-- if (anzahl > 0) { -->
+					<!-- return true; -->
+				<!-- } -->
+                <!-- return false; -->
+            <!-- } -->
+            
+            <!-- const style = new itowns.Style({ -->
+				 <!-- stroke: { color: 'red' }, -->
+				 <!-- point: { color: 'white', line: 'red', radius: 5 }, -->
+			<!-- }); -->
+			
+			<!-- var loraPropertyQuantity; -->
+			<!-- var sphereScaleFactor = 1.01; -->
+			<!-- var scaleCounter = 0; -->
+			
+			<!-- var animateFactor = 1; -->
+			
+			<!-- function initLoraPoints(loraPointsObj) { -->
+				<!-- loraPropertyQuantity = new Array(loraPointsObj.children.length).fill(0); -->
+				
+				<!-- for ([ptIdx, point] of loraPointsObj.children.entries()) { -->
+			
+					<!-- loraPropertyQuantity[ptIdx] = point.feature.geometries[0].properties.anzahl; -->
+	
+					<!-- let material = new THREE.MeshBasicMaterial( { color: 0xdd9911 } ); -->
+					
+					<!-- let cylGgeometry = new THREE.CylinderGeometry(2, 0, 60, 8); -->
+					<!-- cylGgeometry.rotateX(Math.PI/2); -->
+					<!-- cylGgeometry.rotateZ(-Math.PI/2); -->
+					<!-- cylGgeometry.translate(0,0,30); -->
+					<!-- let sphGeometry = new THREE.SphereBufferGeometry( 5, 32, 32 ); -->
+					
+					<!-- let sphere = new THREE.Mesh( sphGeometry, material ); -->
+					<!-- let pin = new THREE.Mesh( cylGgeometry, material ); -->
+					
+					<!-- sphere.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', new itowns.Coordinates('EPSG:4978', point.feature.vertices) ) ); -->
+					<!-- pin.setRotationFromQuaternion( itowns.OrientationUtils.quaternionFromEnuToCRS ( 'EPSG:4978', new itowns.Coordinates('EPSG:4978', point.feature.vertices) ) ); -->
+
+					<!-- sphere.matrixAutoUpdate  = true; -->
+					
+					<!-- let coord = new itowns.Coordinates('EPSG:4978', point.feature.vertices).as('EPSG:4326'); -->
+					<!-- //coord.z = 0.1; -->
+					<!-- pin.position.copy(coord.as('EPSG:4978')); -->
+					<!-- coord.z = 62; -->
+					<!-- sphere.position.copy(coord.as('EPSG:4978')); -->
+					
+					
+					<!-- loraPointsObj.layer.object3d.add( sphere ); -->
+					<!-- loraPointsObj.layer.object3d.add( pin ); -->
+				<!-- } -->
+				<!-- requestAnimationFrame(animateLoraPoints); -->
+			<!-- } -->
+				
+			<!-- function animateLoraPoints() { -->
+				<!-- layer = view.getLayerById('LoRa Punkte'); -->
+			
+				<!-- if (scaleCounter >= 50) { -->
+					<!-- animateFactor = animateFactor * -1; -->
+					<!-- scaleCounter = 0; -->
+				<!-- } else { -->
+					<!-- for ([idx,sphere] of layer.object3d.children.entries()) { -->
+						<!-- if ( idx % 2 == 0 ) { -->
+							<!-- sphere.scale.addScalar(animateFactor * Math.log(loraPropertyQuantity[idx/2]/2+1)/50.); -->
+						<!-- } -->
+					<!-- } -->
+					<!-- scaleCounter += 1; -->
+				<!-- } -->
+				<!-- view.notifyChange(); -->
+				<!-- requestAnimationFrame(animateLoraPoints); -->
+			<!-- } -->
+		
+		
+            <!-- var loraPointSource = new itowns.WFSSource({ -->
+				<!-- url: 'https://geoserver.livinglab-essigfabrik.online/geoserver/wfs?', -->
+                <!-- //protocol: 'wfs', -->
+                <!-- version: '2.0.0', -->
+                <!-- //id: 'test_line', -->
+                <!-- typeName: 'LLE:test_point', -->
+                <!-- crs: 'EPSG:4326', -->
+                <!-- //zoom: { min: 2, max: 2 }, -->
+                <!-- format: 'application/json', -->
+            <!-- }); -->
+
+            <!-- var loraPointsLayer = new itowns.GeometryLayer('LoRa Punkte', new itowns.THREE.Group(), { -->
+                <!-- update: itowns.FeatureProcessing.update, -->
+                <!-- convert: itowns.Feature2Mesh.convert({ -->
+                    <!-- //color: colorPoint, -->
+                    <!-- altitude: altitudePoint, -->
+                    <!-- //radius: 5, -->
+                    <!-- }), -->
+                <!-- //linewidth: 5, -->
+
+                <!-- //style: style, -->
+				<!-- mergeFeatures: false, -->
+				<!-- onMeshCreated: initLoraPoints, -->
+                <!-- filter: acceptFeaturePoint, -->
+                <!-- source: loraPointSource, -->
+            <!-- }); -->
+            
+			<!-- view.addLayer(loraPointsLayer); -->
+			
+
+			<!-- loraPointsLayer.whenReady.then( function _(layer) { -->
+				<!-- var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, view, layer); -->
+            <!-- }); -->
+			
+			
+
+			
+			
+			
+			
+			
+			
+			
+
+			
+            view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
+                // eslint-disable-next-line no-console
+                console.info('Globe initialized');
+                itowns.ColorLayersOrdering.moveLayerToIndex(view, 'OSM', 0);
+                <!-- itowns.ColorLayersOrdering.moveLayerToIndex(view, 'ArcGIS Basemap', 10); -->
+                itowns.ColorLayersOrdering.moveLayerToIndex(view, 'CARTO', 10);
+				
+				
+				$3dTilesLayerverbleibend.opacity = 0.2;
+				
+				
+				view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function m() {
+					const states = view.controls.getStates();
+					states.PAN.enable = false;
+					states.ORBIT.keyboard = undefined;
+					states.DOLLY.mouseButton = itowns.THREE.MOUSE.RIGHT;
+					states.ORBIT.mouseButton = itowns.THREE.MOUSE.MIDDLE;
+				});
+            });
+			
+/*			*/
+        </script>
+    </body>
+</html>
