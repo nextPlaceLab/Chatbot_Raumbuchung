@@ -44,7 +44,7 @@ wurden eigene, behelfsmäßige Testdaten generiert und in die Datenbank eingepfl
 
 ## Demo
 
-[Hier zum Live Demo]([https://pages.github.com/](https://ar.livinglab-essigfabrik.online/itowns_chatbot/index.html))
+[Hier zum Live Demo](https://ar.livinglab-essigfabrik.online/itowns_chatbot/index.html)
 
 ## Diagram
 
